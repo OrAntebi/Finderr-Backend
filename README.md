@@ -1,1 +1,1 @@
-# Finderr-Backend
+Coding Academy - production ready server 
