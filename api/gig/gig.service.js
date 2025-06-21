@@ -21,6 +21,9 @@ async function query(filterBy = { txt: '' }) {
     try {
         const criteria = _buildCriteria(filterBy)
         const sort = _buildSort(filterBy)
+        console.log('fffffffffffffffffffff', filterBy);
+
+
 
         const collection = await dbService.getCollection('gig')
         var gigCursor = await collection.find(criteria, { sort })
@@ -134,7 +137,6 @@ async function removeGigMsg(gigId, msgId) {
 function _buildCriteria(filterBy = {}) {
     const {
         txt = '',
-        // categories: category = [],
         category = '',
         tags = [],
         minPrice = '',
@@ -146,7 +148,10 @@ function _buildCriteria(filterBy = {}) {
     const criteria = {}
 
     if (category) {
-        criteria.category = category
+        criteria.$or = [
+            { category: category },
+            { tags: category }
+        ]
     }
 
     if (tags.length) {
@@ -169,12 +174,14 @@ function _buildCriteria(filterBy = {}) {
 
     if (txt) {
         const regex = { $regex: txt, $options: 'i' }
-        criteria.$or = [
+        // criteria.$or = [
+        const textOr = [
             { title: regex },
             { description: regex },
             { category: regex },
             { tags: regex }
         ]
+        criteria.$or = criteria.$or ? criteria.$or.concat(textOr) : textOr
     }
 
     return criteria
