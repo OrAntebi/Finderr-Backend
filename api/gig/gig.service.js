@@ -91,14 +91,14 @@ async function add(gig) {
 }
 
 async function update(gig) {
-    const gigToSave = { vendor: gig.vendor, speed: gig.speed }
+    const gigToSave = { ...gig }
+    delete gigToSave._id
 
     try {
         const criteria = { _id: ObjectId.createFromHexString(gig._id) }
         const collection = await dbService.getCollection('gig')
         await collection.updateOne(criteria, { $set: gigToSave })
-
-        return gig
+        return { ...gig, ...gigToSave }
     } catch (err) {
         logger.error(`cannot update gig ${gig._id}`, err)
         throw err
