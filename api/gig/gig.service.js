@@ -32,7 +32,7 @@ async function query(filterBy = { txt: '' }) {
             gigCursor.skip(filterBy.pageIdx * PAGE_SIZE).limit(PAGE_SIZE)
         }
 
-        const gigs = gigCursor.toArray()
+        const gigs = await gigCursor.toArray()
 
         return gigs
     } catch (err) {
@@ -142,7 +142,8 @@ function _buildCriteria(filterBy = {}) {
         minPrice = '',
         maxPrice = '',
         daysToMake = '',
-        userId = ''
+        userId = '',
+        sortBy = ''
     } = filterBy
 
     const criteria = {}
@@ -153,9 +154,9 @@ function _buildCriteria(filterBy = {}) {
             { tags: category }
         ]
     }
-
-    if (tags.length) {
-        criteria.tags = { $in: tags }
+    const tagArr = Array.isArray(tags) ? tags : (tags ? [tags] : [])
+    if (tagArr.length) {
+        criteria.tags = { $in: tagArr }
     }
 
     if (minPrice || maxPrice) {
@@ -188,7 +189,33 @@ function _buildCriteria(filterBy = {}) {
 }
 
 
-function _buildSort(filterBy) {
-    if (!filterBy.sortField) return {}
-    return { [filterBy.sortField]: filterBy.sortDir }
+// function _buildSort(filterBy) {
+//     if (!filterBy.sortField) return {}
+//     return { [filterBy.sortField]: filterBy.sortDir }
+// }
+
+// function _buildSort({ sortBy }) {
+//     return sortBy ? { [sortBy]: 1 } : undefined;  // 1 == ascending
+//   }
+
+function _buildSort({ sortBy }) {
+    switch (sortBy) {
+        case 'best-selling': 
+            return { sales: -1 }
+
+        case 'newest-arrivals':
+            return { createdAt: -1 }
+
+        case 'fastest-delivery':
+            return { daysToMake: 1 }
+
+        case 'price-low-to-high':
+            return { price: 1 }
+
+        case 'price-high-to-low':
+            return { price: -1 }
+
+        default:
+            return {}
+    }
 }

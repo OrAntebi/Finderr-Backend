@@ -17,7 +17,8 @@ export async function getGigs(req, res) {
             daysToMake: req.query.daysToMake || '',
             category: req.query.category || '',
             tags: toArray(req.query.tags),
-            userId: req.query.userId || ''
+            userId: req.query.userId || '',
+            sortBy:req.query.sortBy
         }
 
         logger.debug('Trying to get gigs with filterBy:', filterBy)
