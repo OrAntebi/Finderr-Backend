@@ -57,8 +57,8 @@ async function getById(gigId) {
 }
 
 async function remove(gigId) {
-    const { loggedinUser } = asyncLocalStorage.getStore()
-    const { _id: ownerId, isAdmin } = loggedinUser
+    // const { loggedinUser } = asyncLocalStorage.getStore()
+    // const { _id: ownerId, isAdmin } = loggedinUser
 
     try {
         const criteria = {
