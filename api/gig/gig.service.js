@@ -21,9 +21,6 @@ async function query(filterBy = { txt: '' }) {
     try {
         const criteria = _buildCriteria(filterBy)
         const sort = _buildSort(filterBy)
-        console.log('fffffffffffffffffffff', filterBy);
-
-
 
         const collection = await dbService.getCollection('gig')
         var gigCursor = await collection.find(criteria, { sort })
