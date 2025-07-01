@@ -31,6 +31,22 @@ async function query(filterBy = { txt: '' }) {
 
         const gigs = await gigCursor.toArray()
 
+        if (filterBy.sortBy === 'recommended') {
+            gigs.sort((a, b) => {
+                const aScore =
+                    (a.owner?.rate || 0) * 200 +
+                    (a.owner?.level || 0) * 100 +
+                    (a.owner?.reviews || 0) * 0.1
+
+                const bScore =
+                    (b.owner?.rate || 0) * 200 +
+                    (b.owner?.level || 0) * 100 +
+                    (b.owner?.reviews || 0) * 0.1
+
+                return bScore - aScore
+            })
+        }
+
         return gigs
     } catch (err) {
         logger.error('cannot find gigs', err)
@@ -197,8 +213,8 @@ function _buildCriteria(filterBy = {}) {
 
 function _buildSort({ sortBy }) {
     switch (sortBy) {
-        case 'best-selling': 
-            return { sales: -1 }
+        case 'best-selling':
+            return { orders: -1 }
 
         case 'newest-arrivals':
             return { createdAt: -1 }
