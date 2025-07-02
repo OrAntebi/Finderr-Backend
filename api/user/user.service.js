@@ -10,6 +10,7 @@ export const userService = {
     remove, // Delete (remove user)
     query, // List (of users)
     getByUsername, // Used for Login
+    getPublicInfoById,
 }
 
 async function query(filterBy = {}) {
@@ -113,6 +114,24 @@ async function add(user) {
         throw err
     }
 }
+
+async function getPublicInfoById(userId) {
+    try {
+        const collection = await dbService.getCollection('user')
+        const user = await collection.findOne({ _id: ObjectId.createFromHexString(userId) })
+        if (!user) throw new Error('User not found')
+
+        return {
+            _id: user._id,
+            fullname: user.fullname,
+            imgUrl: user.imgUrl,
+        }
+    } catch (err) {
+        logger.error(`cannot get public info for user ${userId}`, err)
+        throw err
+    }
+}
+
 
 function _buildCriteria(filterBy) {
     const criteria = {}
