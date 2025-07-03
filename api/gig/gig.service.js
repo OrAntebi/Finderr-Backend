@@ -17,31 +17,58 @@ export const gigService = {
     removeGigMsg,
 }
 
-async function query(filterBy = { txt: '' }) {
+async function query(filterBy = {}) {
     try {
         const criteria = _buildCriteria(filterBy)
         const sort = _buildSort(filterBy)
 
         const collection = await dbService.getCollection('gig')
-        var gigCursor = await collection.find(criteria, { sort })
 
-        if (filterBy.pageIdx !== undefined) {
-            gigCursor.skip(filterBy.pageIdx * PAGE_SIZE).limit(PAGE_SIZE)
+        const pipeline = [
+            { $match: criteria },
+            {
+                $lookup: {
+                    from: 'review',
+                    let: { gigIdStr: { $toString: '$_id' } },
+                    pipeline: [
+                        {
+                            $match: {
+                                $expr: { $eq: ['$gigId', '$$gigIdStr'] }
+                            }
+                        }
+                    ],
+                    as: 'reviews'
+                }
+            },
+            {
+                $addFields: {
+                    reviewCount: { $size: '$reviews' }
+                }
+            },
+            {
+                $project: {
+                    reviews: 0
+                }
+            }
+        ]
+
+        if (filterBy.sortBy && filterBy.sortBy !== 'recommended' && Object.keys(sort).length) {
+            pipeline.push({ $sort: sort })
         }
 
-        const gigs = await gigCursor.toArray()
+        let gigs = await collection.aggregate(pipeline).toArray()
 
         if (filterBy.sortBy === 'recommended') {
             gigs.sort((a, b) => {
                 const aScore =
                     (a.owner?.rate || 0) * 200 +
                     (a.owner?.level || 0) * 100 +
-                    (a.owner?.reviews || 0) * 0.1
+                    (a.reviewCount || 0) * 0.1
 
                 const bScore =
                     (b.owner?.rate || 0) * 200 +
                     (b.owner?.level || 0) * 100 +
-                    (b.owner?.reviews || 0) * 0.1
+                    (b.reviewCount || 0) * 0.1
 
                 return bScore - aScore
             })
@@ -49,9 +76,9 @@ async function query(filterBy = { txt: '' }) {
 
         return gigs
     } catch (err) {
-        logger.error('cannot find gigs', err)
-        throw err
-    }
+        logger.error('cannot aggregate gigs with reviews', err)
+        throw err
+    }
 }
 
 async function getById(gigId) {
