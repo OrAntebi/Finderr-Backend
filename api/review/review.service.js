@@ -14,10 +14,10 @@ async function query(filterBy = {}) {
         let reviews = await collection.find(criteria).toArray()
 
         switch (filterBy.sortBy) {
-            case 'most recent':
+            case 'most-recent':
                 reviews.sort((a, b) => b.createdAt - a.createdAt)
                 break
-            case 'most relevant':
+            case 'most-relevant':
             default:
                 reviews.sort((a, b) => b.rate - a.rate)
         }
