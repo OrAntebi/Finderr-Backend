@@ -212,7 +212,7 @@ function _buildCriteria(filterBy = {}) {
 
     if (txt) {
         const regex = { $regex: txt, $options: 'i' }
-        // criteria.$or = [
+
         const textOr = [
             { title: regex },
             { description: regex },
@@ -225,18 +225,15 @@ function _buildCriteria(filterBy = {}) {
     return criteria
 }
 
-
-// function _buildSort(filterBy) {
-//     if (!filterBy.sortField) return {}
-//     return { [filterBy.sortField]: filterBy.sortDir }
-// }
-
-// function _buildSort({ sortBy }) {
-//     return sortBy ? { [sortBy]: 1 } : undefined;  // 1 == ascending
-//   }
-
 function _buildSort({ sortBy }) {
     switch (sortBy) {
+        case 'recommended':
+            return {
+                'owner.rate': -1,
+                'owner.level': -1,
+                'owner.reviews': -1
+            }
+
         case 'best-selling':
             return { orders: -1 }
 
