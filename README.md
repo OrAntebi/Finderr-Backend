@@ -5,6 +5,30 @@ This project was built using Node.js + Express + MongoDB as part of a full-stack
 
 ---
 
+## ▶️ How to Run the App
+
+### 🔹 Run in Production Mode (hosted online):
+```bash
+npm run server:prod
+```
+Then open the app at:
+👉 http://localhost:3030
+
+## 🔗 Live App
+https://finderr-app.onrender.com/
+
+🔹 Run Locally (for development or with frontend):
+```bash
+   npm run server:dev
+```
+
+Then go to the frontend project:
+(https://github.com/Farhan-Ganayim/Finderr-Frontend) 
+and run:
+```bash
+npm run dev
+```
+
 ## ✨ Features
 
 * RESTful API for all frontend functionality:
