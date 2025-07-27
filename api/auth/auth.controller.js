@@ -78,4 +78,20 @@ export async function loginWithFacebook(req, res) {
     }
 }
 
+export async function quickLogin(req, res) {
+    const { username } = req.body
+    try {
+        const user = await authService.quickLogin(username)
+        const loginToken = authService.getLoginToken(user)
+
+        logger.info('User quick login: ', user)
+
+        res.cookie('loginToken', loginToken, { sameSite: 'None', secure: true })
+        res.json(user)
+    } catch (err) {
+        logger.error('Failed to quick login ' + err)
+        res.status(401).send({ err: 'Failed to quick login' })
+    }
+}
+
 

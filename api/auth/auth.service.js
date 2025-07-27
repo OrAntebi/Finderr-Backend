@@ -11,6 +11,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 export const authService = {
 	signup,
 	login,
+	quickLogin,
 	loginWithGoogle,
 	loginWithFacebook,
 	getLoginToken,
@@ -30,6 +31,22 @@ async function login(username, password) {
 	const isPasswordMatch = await bcrypt.compare(password, user.password)
 	if (!isPasswordMatch) {
 		return Promise.reject('Invalid username or password')
+	}
+
+	delete user.password
+	user._id = user._id.toString()
+	return user
+}
+
+async function quickLogin(username) {
+	logger.debug(`auth.service - quick login with username: ${username}`)
+
+	const user = await userService.getByUsername(username)
+	if (!user) return Promise.reject('User not found')
+
+	// Check if user is allowed for quick login
+	if (!user.quickLogin) {
+		return Promise.reject('User is not authorized for quick login')
 	}
 
 	delete user.password
