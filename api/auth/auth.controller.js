@@ -1,8 +1,5 @@
 import { authService } from './auth.service.js'
 import { logger } from '../../services/logger.service.js'
-import { OAuth2Client } from 'google-auth-library'
-
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
 export async function login(req, res) {
     const { username, password } = req.body
@@ -53,15 +50,7 @@ export async function loginWithGoogle(req, res) {
     if (!credential) return res.status(400).send({ err: 'Missing Google credential' })
 
     try {
-        const ticket = await client.verifyIdToken({
-            idToken: credential,
-            audience: process.env.GOOGLE_CLIENT_ID,
-        })
-
-        const payload = ticket.getPayload()
-        const { email, name, picture } = payload
-
-        const user = await authService.loginWithGoogle({ email, name, picture })
+        const user = await authService.loginWithGoogle(credential)
         const loginToken = authService.getLoginToken(user)
 
         res.cookie('loginToken', loginToken, { sameSite: 'None', secure: true })
@@ -71,3 +60,22 @@ export async function loginWithGoogle(req, res) {
         res.status(401).send({ err: 'Failed to login with Google' })
     }
 }
+
+
+export async function loginWithFacebook(req, res) {
+    const { accessToken } = req.body
+    if (!accessToken) return res.status(400).send({ err: 'Missing Facebook access token' })
+
+    try {
+        const user = await authService.loginWithFacebook(accessToken)
+        const loginToken = authService.getLoginToken(user)
+
+        res.cookie('loginToken', loginToken, { sameSite: 'None', secure: true })
+        res.json(user)
+    } catch (err) {
+        logger.error('Failed Facebook login', err)
+        res.status(401).send({ err: 'Failed to login with Facebook' })
+    }
+}
+
+

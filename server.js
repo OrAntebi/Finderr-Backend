@@ -1,3 +1,4 @@
+import 'dotenv/config'
 import http from 'http'
 import path from 'path'
 import cors from 'cors'

@@ -4,12 +4,12 @@ import { reviewService } from '../review/review.service.js'
 import { ObjectId } from 'mongodb'
 
 export const userService = {
-    add, // Create (Signup)
-    getById, // Read (Profile page)
-    update, // Update (Edit profile)
-    remove, // Delete (remove user)
-    query, // List (of users)
-    getByUsername, // Used for Login
+    add,
+    getById,
+    update,
+    remove,
+    query,
+    getByUsername,
     getPublicInfoById,
 }
 
@@ -55,13 +55,34 @@ async function getById(userId) {
     }
 }
 
-async function getByUsername(username) {
+async function getByUsername(identifier) {
     try {
         const collection = await dbService.getCollection('user')
-        const user = await collection.findOne({ username })
+        
+        const searchPatterns = [
+            { username: { $regex: new RegExp(`^${identifier}$`, 'i') } },
+        ]
+        
+        if (!identifier.includes('@')) {
+            searchPatterns.push(
+                { username: { $regex: new RegExp(`^${identifier}@`, 'i') } }
+            )
+        }
+        
+        if (identifier.includes('@')) {
+            const usernameBeforeAt = identifier.split('@')[0]
+            searchPatterns.push(
+                { username: { $regex: new RegExp(`^${usernameBeforeAt}$`, 'i') } }
+            )
+        }
+        
+        const user = await collection.findOne({ 
+            $or: searchPatterns
+        })
+        
         return user
     } catch (err) {
-        logger.error(`while finding user by username: ${username}`, err)
+        logger.error(`while finding user by username: ${identifier}`, err)
         throw err
     }
 }
@@ -80,11 +101,9 @@ async function remove(userId) {
 
 async function update(user) {
     try {
-        // peek only updatable properties
         const userToSave = {
-            _id: ObjectId.createFromHexString(user._id), // needed for the returnd obj
+            _id: ObjectId.createFromHexString(user._id),
             fullname: user.fullname,
-            score: user.score,
         }
         const collection = await dbService.getCollection('user')
         await collection.updateOne({ _id: userToSave._id }, { $set: userToSave })
@@ -97,14 +116,11 @@ async function update(user) {
 
 async function add(user) {
     try {
-        // peek only updatable fields!
         const userToAdd = {
             username: user.username,
             password: user.password,
             fullname: user.fullname,
-            imgUrl: user.imgUrl,
-            isAdmin: user.isAdmin,
-            score: 100,
+            imgUrl: user.imgUrl
         }
         const collection = await dbService.getCollection('user')
         await collection.insertOne(userToAdd)
@@ -131,7 +147,6 @@ async function getPublicInfoById(userId) {
         throw err
     }
 }
-
 
 function _buildCriteria(filterBy) {
     const criteria = {}

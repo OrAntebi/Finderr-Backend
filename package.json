@@ -17,6 +17,7 @@
         "cookie-parser": "^1.4.6",
         "cors": "^2.8.5",
         "cryptr": "^6.0.3",
+        "dotenv": "^17.2.1",
         "express": "^5.1.0",
         "google-auth-library": "^10.1.0",
         "mongodb": "^6.6.2",
