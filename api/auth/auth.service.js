@@ -9,6 +9,7 @@ const cryptr = new Cryptr(process.env.SECRET || 'Secret-Puk-1234')
 export const authService = {
 	signup,
 	login,
+	loginWithGoogle,
 	getLoginToken,
 	validateToken,
 }
@@ -18,10 +19,6 @@ async function login(username, password) {
 
 	const user = await userService.getByUsername(username)
 	if (!user) return Promise.reject('Invalid username or password')
-
-	// TODO: un-comment for real login
-	// const match = await bcrypt.compare(password, user.password)
-	// if (!match) return Promise.reject('Invalid username or password')
 
 	delete user.password
 	user._id = user._id.toString()
@@ -41,13 +38,29 @@ async function signup({ username, password, fullname, imgUrl, isAdmin }) {
 	return userService.add({ username, password: hash, fullname, imgUrl, isAdmin })
 }
 
+async function loginWithGoogle({ email, name, picture }) {
+	let user = await userService.getByUsername(email)
+
+	if (!user) {
+		user = await userService.add({
+			username: email,
+			fullname: name,
+			imgUrl: picture
+		})
+	}
+
+	delete user.password
+	user._id = user._id.toString()
+	return user
+}
+
 function getLoginToken(user) {
-	const userInfo = { 
-        _id: user._id, 
-        fullname: user.fullname, 
-        score: user.score,
-        isAdmin: user.isAdmin,
-    }
+	const userInfo = {
+		_id: user._id,
+		fullname: user.fullname,
+		score: user.score,
+		isAdmin: user.isAdmin,
+	}
 	return cryptr.encrypt(JSON.stringify(userInfo))
 }
 

@@ -1,5 +1,8 @@
 import { authService } from './auth.service.js'
 import { logger } from '../../services/logger.service.js'
+import { OAuth2Client } from 'google-auth-library'
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID)
 
 export async function login(req, res) {
     const { username, password } = req.body
@@ -20,9 +23,6 @@ export async function login(req, res) {
 export async function signup(req, res) {
     try {
         const credentials = req.body
-
-        // Never log passwords
-        // logger.debug(credentials)
 
         const account = await authService.signup(credentials)
         logger.debug(`auth.route - new account created: ` + JSON.stringify(account))
@@ -45,5 +45,29 @@ export async function logout(req, res) {
         res.send({ msg: 'Logged out successfully' })
     } catch (err) {
         res.status(400).send({ err: 'Failed to logout' })
+    }
+}
+
+export async function loginWithGoogle(req, res) {
+    const { credential } = req.body
+    if (!credential) return res.status(400).send({ err: 'Missing Google credential' })
+
+    try {
+        const ticket = await client.verifyIdToken({
+            idToken: credential,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        })
+
+        const payload = ticket.getPayload()
+        const { email, name, picture } = payload
+
+        const user = await authService.loginWithGoogle({ email, name, picture })
+        const loginToken = authService.getLoginToken(user)
+
+        res.cookie('loginToken', loginToken, { sameSite: 'None', secure: true })
+        res.json(user)
+    } catch (err) {
+        logger.error('Failed Google login', err)
+        res.status(401).send({ err: 'Failed to login with Google' })
     }
 }
