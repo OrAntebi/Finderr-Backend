@@ -3,7 +3,8 @@ import { logger } from '../../services/logger.service.js'
 
 export async function getOrders(req, res) {
     try {
-        const orders = await orderService.query()
+        const filterBy = req.query
+        const orders = await orderService.query(filterBy)
         res.json(orders)
     } catch (err) {
         logger.error('Failed to get orders', err)

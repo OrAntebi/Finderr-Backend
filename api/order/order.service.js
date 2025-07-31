@@ -4,6 +4,7 @@ import { dbService } from '../../services/db.service.js'
 import { logger } from '../../services/logger.service.js'
 import { makeId } from '../../services/util.service.js'
 import { asyncLocalStorage } from '../../services/als.service.js'
+import { socketService } from '../../services/socket.service.js'
 
 export const orderService = {
     query,
@@ -12,17 +13,27 @@ export const orderService = {
     update,
 }
 
-async function query() {
+async function query(filterBy = {}) {
     try {
         const store = asyncLocalStorage.getStore()
         const loggedinUser = store?.loggedinUser
         if (!loggedinUser) throw new Error('User not logged in')
 
-        const criteria = {
-            $or: [
-                { 'buyer._id': loggedinUser._id },
-                { 'seller._id': loggedinUser._id }
-            ]
+        let criteria = {}
+        
+        if (filterBy.userId && filterBy.role) {
+            if (filterBy.role === 'seller') {
+                criteria = { 'seller._id': filterBy.userId }
+            } else if (filterBy.role === 'buyer') {
+                criteria = { 'buyer._id': filterBy.userId }
+            }
+        } else {
+            criteria = {
+                $or: [
+                    { 'buyer._id': loggedinUser._id },
+                    { 'seller._id': loggedinUser._id }
+                ]
+            }
         }
 
         const collection = await dbService.getCollection('order')
@@ -54,6 +65,21 @@ async function add(order) {
         const collection = await dbService.getCollection('order')
         order.createdAt = Date.now()
         await collection.insertOne(order)
+
+        const msg = `New order received from ${order.buyer.fullname}`
+        
+        try {
+            await socketService.emitToUser({
+                type: 'order-received',
+                data: {
+                    message: msg,
+                    order: order
+                },
+                userId: order.seller._id
+            })
+        } catch (err) {
+            logger.error('Failed to emit socket event:', err)
+        }
 
         return order
     } catch (err) {
