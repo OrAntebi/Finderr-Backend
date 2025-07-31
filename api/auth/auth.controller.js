@@ -61,23 +61,6 @@ export async function loginWithGoogle(req, res) {
     }
 }
 
-
-export async function loginWithFacebook(req, res) {
-    const { accessToken } = req.body
-    if (!accessToken) return res.status(400).send({ err: 'Missing Facebook access token' })
-
-    try {
-        const user = await authService.loginWithFacebook(accessToken)
-        const loginToken = authService.getLoginToken(user)
-
-        res.cookie('loginToken', loginToken, { sameSite: 'None', secure: true })
-        res.json(user)
-    } catch (err) {
-        logger.error('Failed Facebook login', err)
-        res.status(401).send({ err: 'Failed to login with Facebook' })
-    }
-}
-
 export async function quickLogin(req, res) {
     const { username } = req.body
     try {

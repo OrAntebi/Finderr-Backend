@@ -13,7 +13,6 @@ export const authService = {
 	login,
 	quickLogin,
 	loginWithGoogle,
-	loginWithFacebook,
 	getLoginToken,
 	validateToken,
 }
@@ -25,7 +24,7 @@ async function login(username, password) {
 	if (!user) return Promise.reject('Invalid username or password')
 
 	if (!user.password || typeof user.password !== 'string') {
-		return Promise.reject('This account was created with Google/Facebook or has no password set. Please use social login or reset your password.')
+		return Promise.reject('This account was created with Google or has no password set. Please use social login or reset your password.')
 	}
 
 	const isPasswordMatch = await bcrypt.compare(password, user.password)
@@ -44,7 +43,6 @@ async function quickLogin(username) {
 	const user = await userService.getByUsername(username)
 	if (!user) return Promise.reject('User not found')
 
-	// Check if user is allowed for quick login
 	if (!user.quickLogin) {
 		return Promise.reject('User is not authorized for quick login')
 	}
@@ -108,35 +106,6 @@ async function loginWithGoogle(credential) {
 	} catch (error) {
 		logger.error('Google login verification failed:', error)
 		return Promise.reject('Can\'t continue with Google - Invalid token or configuration error')
-	}
-}
-
-async function loginWithFacebook(accessToken) {
-	try {
-		const res = await fetch(`https://graph.facebook.com/me?fields=id,name,email,picture.width(150).height(150)&access_token=${accessToken}`)
-		if (!res.ok) throw new Error('Failed to fetch Facebook user data')
-
-		const fbData = await res.json()
-		const { email, name, picture } = fbData
-		if (!email) throw new Error('Email permission not granted from Facebook')
-
-		let user = await userService.getByUsername(email)
-
-		if (!user) {
-			user = await userService.add({
-				username: email.split('@')[0],
-				fullname: name,
-				imgUrl: picture?.data?.url || '',
-			})
-		}
-
-		delete user.password
-		user._id = user._id.toString()
-		return user
-
-	} catch (err) {
-		logger.error('Facebook login failed', err)
-		throw err
 	}
 }
 
